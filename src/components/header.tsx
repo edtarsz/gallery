@@ -19,7 +19,7 @@ function Header({ session }: HeaderProps) {
             <header className="fixed top-0 inset-x-0 mx-auto w-full px-10 py-5 flex justify-between items-center bg-(--bg-color) shadow-lg z-2">
                 <strong className="text-lg">
                     <Link to="/">
-                        Image Galery
+                        Image Gallery
                     </Link>
                 </strong>
                 <ul className="flex gap-8">

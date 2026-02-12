@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+:root {
+  --bg-color: #222;
+  --text-color: #fff;
+  --primary-color: #5e0422;
+  --hover-primary-color: #7a0530;
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari y Opera */
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    /* IE y Edge */
+    scrollbar-width: none;
+    /* Firefox */
+  }
+}

@@ -21,7 +21,7 @@ function ImageCard({ img, session }: ImageProps) {
 
     return (
         <>
-            <div key={img.id} className="break-inside-avoid relative group overflow-hidden shadow-sm hover:shadow-lg transition-all">
+            <div key={img.id} className="break-inside-avoid relative group overflow-hidden shadow-sm hover:shadow-lg transition-all bg-(--primary-color)/40">
                 <>{img.user?.email === session?.user.email && (
                     <div className="absolute top-3 right-3 z-1 flex gap-1">
                         <div className="flex justify-center items-center cursor-pointer bg-blue-950 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300" onClick={() => {

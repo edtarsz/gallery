@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../supabase-client';
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 export function useRealtimeTable<T extends { id: number }>(
     table: string,
@@ -12,64 +13,66 @@ export function useRealtimeTable<T extends { id: number }>(
 
     useEffect(() => {
         if (!enabled) return;
-        let cancelled = false;
 
-        // Carga inicial con JOIN
-        const fetchData = async () => {
+        let channel: RealtimeChannel;
+        let isCancelled = false; // Flag para evitar actualizaciones en componentes desmontados
+
+        const init = async () => {
+            // Carga inicial
             const { data: rows, error } = await supabase
                 .from(table)
                 .select(query)
                 .order(orderBy, { ascending: true });
 
-            if (!cancelled) {
-                if (error) console.error(`Error fetching ${table}:`, error.message);
-                else setData(rows as unknown as T[]);
-                setLoading(false);
+            if (!isCancelled) {
+                if (error) {
+                    console.error("Error carga inicial:", error.message);
+                } else {
+                    setData(rows as unknown as T[]);
+                    setLoading(false);
+                }
             }
+
+            // Realtime
+            const channelName = `public:${table}:${Math.random()}`;
+            channel = supabase
+                .channel(channelName)
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: table },
+                    async (payload) => {
+                        if (isCancelled) return;
+
+                        const { eventType, new: newItem, old: oldItem } = payload;
+
+                        if (eventType === 'INSERT') {
+                            const { data: enriched } = await supabase
+                                .from(table)
+                                .select(query)
+                                .eq('id', newItem.id)
+                                .single();
+
+                            if (enriched && typeof enriched === 'object' && 'id' in enriched) {
+                                setData((prev) => {
+                                    if (prev.some(item => item.id === (enriched as any).id)) return prev;
+                                    return [...prev, enriched as unknown as T];
+                                });
+                            }
+                        }
+                        else if (eventType === 'DELETE') {
+                            const idToDelete = oldItem.id;
+                            setData((prev) => prev.filter((item) => item.id !== idToDelete));
+                        }
+                    }
+                )
+                .subscribe();
         };
 
-        fetchData();
-
-        // Suscripción Realtime
-        const channel = supabase
-            .channel(`realtime:${table}:${Date.now()}`)
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table },
-                async (payload) => {
-                    if (cancelled) return;
-
-                    const { eventType, new: newItem, old: oldItem } = payload;
-
-                    if (eventType === 'INSERT') {
-                        // Re-fetch to get JOIN data that the payload doesn't include
-                        const { data: enrichedItem, error } = await supabase
-                            .from(table)
-                            .select(query)
-                            .eq('id', newItem.id)
-                            .single();
-
-                        if (!error && enrichedItem && !cancelled) {
-                            setData((prev) => [...prev, enrichedItem as unknown as T]);
-                        }
-                    } else if (eventType === 'UPDATE') {
-                        setData((prev) =>
-                            prev.map((item) =>
-                                item.id === (newItem as T).id ? (newItem as T) : item
-                            )
-                        );
-                    } else if (eventType === 'DELETE') {
-                        setData((prev) =>
-                            prev.filter((item) => item.id !== (oldItem as T).id)
-                        );
-                    }
-                }
-            )
-            .subscribe();
+        init();
 
         return () => {
-            cancelled = true;
-            supabase.removeChannel(channel);
+            isCancelled = true;
+            if (channel) supabase.removeChannel(channel);
         };
     }, [enabled, table, query, orderBy]);
 

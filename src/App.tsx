@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import './App.css'
 import Header from './components/header.tsx'
 import LandingPage from './pages/landing-page.tsx'
@@ -36,10 +36,21 @@ function App() {
         <Header session={session} />
 
         <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login mode="login" />} />
-          <Route path="/signup" element={<Login mode="signup" />} />
-          <Route path="/pictures" element={<Pictures session={session} />} />
+          <Route path="/" element={
+            session ? <Navigate to="/pictures" /> : <LandingPage />
+          } />
+
+          <Route path="/login" element={
+            session ? <Navigate to="/pictures" /> : <Login mode="login" />
+          } />
+
+          <Route path="/signup" element={
+            session ? <Navigate to="/pictures" /> : <Login mode="signup" />
+          } />
+
+          <Route path="/pictures" element={
+            session ? <Pictures session={session} /> : <Navigate to="/" />
+          } />
         </Routes>
       </div>
     </BrowserRouter>

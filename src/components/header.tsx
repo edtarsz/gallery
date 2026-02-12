@@ -16,7 +16,7 @@ function Header({ session }: HeaderProps) {
 
     return (
         <>
-            <header className="fixed top-0 inset-x-0 mx-auto w-full px-10 py-5 flex justify-between items-center bg-(--bg-color) shadow-lg z-1">
+            <header className="fixed top-0 inset-x-0 mx-auto w-full px-10 py-5 flex justify-between items-center bg-(--bg-color) shadow-lg z-2">
                 <strong className="text-lg">
                     <Link to="/">
                         Image Galery
@@ -33,7 +33,7 @@ function Header({ session }: HeaderProps) {
                             <li className="font-bold text-sm">
                                 <button className="cursor-pointer hover:underline">
                                     <Link to="/pictures">
-                                        Watch Pictures
+                                        Gallery Pictures
                                     </Link>
                                 </button>
                             </li>

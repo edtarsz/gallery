@@ -1,6 +1,6 @@
 import type { Session } from "@supabase/supabase-js";
 import { Trash, Pen } from "lucide-react";
-import { supabase } from "../supabase-client";
+import { useImageService } from "../context/image-context";
 
 interface ImageItem {
     id: number;
@@ -17,45 +17,22 @@ interface ImageProps {
 }
 
 function ImageCard({ img, session }: ImageProps) {
-    async function deleteImage() {
-        const pathParts = img.url.split('/');
-        const fileName = pathParts[pathParts.length - 1];
-        const fullPath = `galery/${fileName}`;
-
-        // borrar de la DB
-        const { error: dbError } = await supabase
-            .from('image')
-            .delete()
-            .eq('id', img.id);
-
-        if (dbError) {
-            console.error("Error en DB:", dbError);
-            return;
-        }
-
-        // borrar del storage
-        const { error: storageError } = await supabase.storage
-            .from('user-images')
-            .remove([fullPath]);
-
-        if (storageError) {
-            console.error("Error en Storage:", storageError);
-        }
-    }
-
-    async function editImage() {
-        // to do
-    }
+    const { deleteImage, setIsEditing, setEditingImage, setShowMenu } = useImageService();
 
     return (
         <>
             <div key={img.id} className="break-inside-avoid relative group overflow-hidden shadow-sm hover:shadow-lg transition-all">
                 <>{img.user?.email === session?.user.email && (
                     <div className="absolute top-3 right-3 z-1 flex gap-1">
-                        <div className="flex justify-center items-center cursor-pointer bg-blue-950 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300" onClick={editImage} >
+                        <div className="flex justify-center items-center cursor-pointer bg-blue-950 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300" onClick={() => {
+                            setEditingImage(img);
+                            setIsEditing(true);
+                            setShowMenu(true);
+                        }
+                        }>
                             <Pen size={15} />
                         </div>
-                        <div className="flex justify-center items-center cursor-pointer bg-red-900 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300" onClick={deleteImage} >
+                        <div className="flex justify-center items-center cursor-pointer bg-red-900 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300" onClick={() => deleteImage(img)} >
                             <Trash size={15} />
                         </div>
                     </div>

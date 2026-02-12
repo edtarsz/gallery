@@ -63,6 +63,21 @@ export function useRealtimeTable<T extends { id: number }>(
                             const idToDelete = oldItem.id;
                             setData((prev) => prev.filter((item) => item.id !== idToDelete));
                         }
+                        else if (eventType === 'UPDATE') {
+                            const { data: enriched } = await supabase
+                                .from(table)
+                                .select(query)
+                                .eq('id', newItem.id)
+                                .single();
+
+                            if (enriched && typeof enriched === 'object' && 'id' in enriched) {
+                                setData((prev) =>
+                                    prev.map((item) =>
+                                        item.id === (enriched as any).id ? (enriched as unknown as T) : item
+                                    )
+                                );
+                            }
+                        }
                     }
                 )
                 .subscribe();
